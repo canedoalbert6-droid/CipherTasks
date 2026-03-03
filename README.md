@@ -1,100 +1,133 @@
 CipherTask
-Secure Encrypted To-Do Application
-(Flutter + MVVM Architecture)
 
-CipherTask is a secure task management mobile application developed using Flutter and the Model–View–ViewModel (MVVM) architectural pattern. The application is designed with a strong emphasis on data confidentiality, integrity, and secure user authentication.
+A secure encrypted task management mobile application built using Flutter, implementing strict MVVM architecture, encrypted local storage, biometric authentication, and hardware-backed key management.
 
-The system implements industry-standard encryption mechanisms, biometric authentication, and secure key management to protect sensitive user data stored locally on the device.
+Features
 
-Project Objectives
+AES-256 Encryption for sensitive task notes
 
-The primary objective of CipherTask is to demonstrate secure mobile data storage and secure authentication practices by:
+Encrypted Local Database (SQLCipher / Encrypted Hive)
 
-• Encrypting all stored task data
-• Securing cryptographic keys using platform-protected storage
-• Enforcing biometric authentication
-• Preventing unauthorized access through automatic session control
+Biometric Authentication (Fingerprint / Face ID)
 
-Core Features
+Automatic Session Timeout (2 minutes inactivity)
 
-Encrypted Local Database
-The application uses either SQLCipher or Encrypted Hive to ensure that the entire local database file is encrypted at rest.
+Hardware-Backed Key Storage (flutter_secure_storage)
 
-AES-256 Encryption
-Sensitive task notes are encrypted using AES-256 encryption before being stored in the database.
-
-Secure Key Storage
-Encryption keys are stored using secure platform services:
-• Android Keystore (Android devices)
-• iOS Keychain (iOS devices)
-Access is handled via flutter_secure_storage.
-
-Biometric Authentication
-Users can authenticate using:
-• Fingerprint
-• Face ID
-
-Automatic Session Lock
-The application automatically locks after two (2) minutes of inactivity to prevent unauthorized access.
+Secure Key Generation (No hardcoded secrets)
 
 Strict MVVM Architecture
-The application strictly enforces separation of concerns using the MVVM pattern.
 
-Project Structure (MVVM)
+HTTPS Network Communication
+
+Optional OTP (MFA) Support
+
+Architecture
+
+This project strictly follows:
+
+MVVM (Model–View–ViewModel)
+
+Provider for State Management
+
+Service-based security abstraction
+
+Separation of Concerns (UI, Logic, Data)
+
+
+Project Structure
 
 lib/
+├── main.dart
+├── models/
+│   ├── todo_model.dart
+│   └── user_model.dart
+├── views/
+│   ├── login_view.dart
+│   ├── register_view.dart
+│   ├── todo_list_view.dart
+│   └── widgets/
+├── viewmodels/
+│   ├── auth_viewmodel.dart
+│   └── todo_viewmodel.dart
+├── services/
+│   ├── encryption_service.dart
+│   ├── database_service.dart
+│   ├── key_storage_service.dart
+│   └── session_service.dart
+└── utils/
+    └── constants.dart
 
-main.dart
-Entry point of the application. Handles dependency injection and route configuration.
 
-models/ (Data Layer – Plain Data Models)
-• todo_model.dart – Defines the task entity structure
-• user_model.dart – Defines user profile data
+    Security Features
 
-views/ (User Interface Layer – UI Only)
-• login_view.dart – Biometric and password authentication interface
-• register_view.dart – User registration with optional multi-factor authentication
-• todo_list_view.dart – Main secure task dashboard
-• widgets/ – Reusable secure input and UI components
+Database file fully encrypted
 
-viewmodels/ (Business Logic Layer – State Management)
-• auth_viewmodel.dart – Handles login, biometric authentication, and auto-logout logic
-• todo_viewmodel.dart – Handles encrypted CRUD operations for tasks
+AES-256 encryption for sensitive fields
 
-services/ (Security and Data Access Layer)
-• encryption_service.dart – AES-256 encryption and decryption logic
-• database_service.dart – SQLCipher or Encrypted Hive implementation
-• key_storage_service.dart – Wrapper for secure key storage
-• session_service.dart – Inactivity timeout management
+Encryption keys generated at runtime
 
-utils/
-• constants.dart – Configuration values (timeouts, security parameters)
+Keys stored in Android Keystore / iOS Keychain
 
-Application Flow
+2-minute inactivity auto-lock
 
-The system strictly follows the MVVM communication pattern:
+Biometric login enabled only after password authentication
 
-View → ViewModel → Service → Database
+No hardcoded secrets
 
-Views do not directly interact with the database or encryption mechanisms. All data processing, encryption, and security logic are handled within the ViewModel and Service layers.
+HTTPS enforced for network calls
 
-Security Implementation
+Scenario
 
-Encrypted Database
+CipherTask is designed for high-profile executives where:
 
-The entire local database file is encrypted using SQLCipher or Encrypted Hive.
+Extracted database files must remain unreadable
 
-Database Key Management
+Encryption keys must never exist in plain text
 
-• The encryption key is generated securely during the first application launch.
-• The key is stored using flutter_secure_storage.
-• The key is never hardcoded in the source code.
-• The key is protected by platform-level secure storage mechanisms.
+App must auto-lock after inactivity
 
-Security Assurance
+Biometrics provide secure but convenient access
 
-If an attacker extracts the database file from the device storage, the contents remain unreadable without access to the securely stored encryption key.
+This follows a Trust No One security model.
 
-Conclusion
+| Name | Role                                   |
+| ---- | -------------------------------------- |
+| Albert Jhun Cañedo | Lead Architect & Database Engineer     |
+| Jian Carpio   | Security & Cryptography Lead           |
+| David Manayatay   | Authentication & Biometrics Specialist |
+| Christian Jay Capuyan   | Backend & Network Engineer             |
+| Alyysa Monzon   | UI/UX & Integration Specialist         |
 
-CipherTask demonstrates secure mobile application development practices by integrating encryption at rest, secure key management, biometric authentication, and strict architectural separation using MVVM. The application serves as a practical implementation of mobile data protection principles and secure session management.
+Technologies Used
+
+Flutter
+
+Provider
+
+sqflite_sqlcipher / Hive
+
+encrypt (AES-256)
+
+flutter_secure_storage
+
+local_auth
+
+Firebase Auth (optional)
+
+Technical Requirements Implemented
+Database Encryption
+
+Encrypted database file using secure key stored in hardware-backed storage.
+
+AES-256 Field Encryption
+
+Sensitive task notes encrypted before database insertion.
+
+Auto-Logout
+
+2-minute inactivity timer forces reauthentication.
+
+Biometric Authentication
+
+Fingerprint / Face ID supported after initial password login.
