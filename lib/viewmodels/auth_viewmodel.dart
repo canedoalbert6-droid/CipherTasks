@@ -30,9 +30,6 @@ class AuthViewModel extends ChangeNotifier {
     _generatedOtp = (Random().nextInt(900000) + 100000).toString();
     
     // In a real app, you'd send the email here
-    // For this demonstration, we'll print it to console too in case SMTP is not configured
-    print('Generated OTP for $email: $_generatedOtp');
-    
     await _emailService.sendOtpEmail(email, _generatedOtp!);
   }
 

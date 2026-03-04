@@ -1,5 +1,4 @@
 import 'package:encrypt/encrypt.dart' as encrypt;
-import 'dart:convert';
 
 class EncryptionService {
   final String keyString; // Base64 encoded 32-byte key
@@ -13,7 +12,7 @@ class EncryptionService {
 
     final encrypted = encrypter.encrypt(plaintext, iv: iv);
     // Combine IV and Ciphertext for storage (simplification for lab)
-    return iv.base64 + ":" + encrypted.base64;
+    return '${iv.base64}:${encrypted.base64}';
   }
 
   String decryptData(String ciphertextWithIv) {

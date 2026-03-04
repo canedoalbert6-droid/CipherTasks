@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Added for HapticFeedback
 import 'package:provider/provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../viewmodels/auth_viewmodel.dart';
+import '../utils/app_theme.dart';
+import 'widgets/app_logo.dart'; // Import the new logo widget
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -10,141 +15,158 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
-  final _passwordController = TextEditingController();
   final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
+
+  void _handleLogin() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) return;
+
+    setState(() => _isLoading = true);
+    final authViewModel = context.read<AuthViewModel>();
+    
+    // Check if email matches first
+    bool emailCorrect = await authViewModel.isEmailRegistered(_emailController.text);
+    
+    if (emailCorrect) {
+      final success = await authViewModel.login(_passwordController.text);
+      setState(() => _isLoading = false);
+
+      if (success && mounted) {
+        HapticFeedback.lightImpact(); // Added sensory feedback
+        Navigator.pushReplacementNamed(context, '/todo_list');
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid password. Please try again.')),
+        );
+      }
+    } else {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email not found. Please register.')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        width: double.infinity,
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.black, Colors.black.withOpacity(0.9), const Color(0xFF001100)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppTheme.backgroundDark, Color(0xFF1E293B)],
           ),
         ),
-        child: Center(
+        child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(32.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.lock_outline, size: 80, color: Color(0xFF00FF41)),
-                const SizedBox(height: 16),
-                const Text(
-                  'TERMINAL ACCESS',
-                  style: TextStyle(
-                    color: Color(0xFF00FF41),
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 4,
-                  ),
+                const SizedBox(height: 20),
+                const Center(
+                  child: AppLogo(size: 100, showText: true), // Modern unique logo
                 ),
+                const SizedBox(height: 48),
+                Text(
+                  'Authorize to access your secure vault',
+                  style: TextStyle(
+                    color: Colors.white.withAlpha(128),
+                    fontSize: 16,
+                  ),
+                ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.2, end: 0),
                 const SizedBox(height: 48),
                 TextField(
                   controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'SECURITY EMAIL',
-                    prefixIcon: Icon(Icons.email, color: Color(0xFF00FF41)),
-                  ),
                   keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(color: Color(0xFF00FF41), fontFamily: 'monospace'),
-                ),
+                  decoration: const InputDecoration(
+                    labelText: 'Email Address',
+                    prefixIcon: Icon(FontAwesomeIcons.envelope, size: 18),
+                  ),
+                ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'MASTER PASSKEY',
-                    prefixIcon: Icon(Icons.key, color: Color(0xFF00FF41)),
-                  ),
-                  obscureText: true,
-                  style: const TextStyle(color: Color(0xFF00FF41), fontFamily: 'monospace'),
-                ),
-                const SizedBox(height: 24),
-                if (_isLoading)
-                  const CircularProgressIndicator(color: Color(0xFF00FF41))
-                else ...[
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        bool success = await context.read<AuthViewModel>().login(_passwordController.text);
-                        if (success && mounted) {
-                          Navigator.pushReplacementNamed(context, '/todo_list');
-                        } else if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              backgroundColor: Colors.red,
-                              content: Text('ACCESS DENIED: INVALID KEY'),
-                            ),
-                          );
-                        }
-                      },
-                      child: const Text('AUTHORIZE WITH PASSKEY'),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF00FF41)),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    prefixIcon: const Icon(FontAwesomeIcons.lock, size: 18),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? FontAwesomeIcons.eyeSlash : FontAwesomeIcons.eye,
+                        size: 18,
+                        color: Colors.white70,
                       ),
-                      onPressed: () async {
-                        if (_emailController.text.isEmpty || !_emailController.text.contains('@')) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('INVALID SECURITY EMAIL')),
-                          );
-                          return;
-                        }
-
-                        setState(() => _isLoading = true);
-                        final authVM = context.read<AuthViewModel>();
-                        bool isRegistered = await authVM.isEmailRegistered(_emailController.text);
-                        
-                        if (isRegistered) {
-                          await authVM.sendOtp(_emailController.text);
-                          if (mounted) Navigator.pushNamed(context, '/otp');
-                        } else {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('EMAIL NOT REGISTERED ON THIS TERMINAL')),
-                            );
-                          }
-                        }
-                        setState(() => _isLoading = false);
-                      },
-                      child: const Text('GET OTP FOR ACCESS', style: TextStyle(color: Color(0xFF00FF41))),
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
-                ],
+                ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2, end: 0),
                 const SizedBox(height: 32),
-                const Text('OR', style: TextStyle(color: Color(0xFF004400))),
-                const SizedBox(height: 24),
-                InkWell(
-                  onTap: () async {
-                    bool success = await context.read<AuthViewModel>().authenticateWithBiometrics();
-                    if (success && mounted) {
-                      Navigator.pushReplacementNamed(context, '/todo_list');
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF00FF41), width: 1),
-                    ),
-                    child: const Icon(Icons.fingerprint, size: 48, color: Color(0xFF00FF41)),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _handleLogin,
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                          )
+                        : const Text('AUTHORIZE ACCESS'),
                   ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'BIOMETRIC SCAN',
-                  style: TextStyle(color: Color(0xFF00FF41), fontSize: 10, letterSpacing: 2),
-                ),
+                ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final authViewModel = context.read<AuthViewModel>();
+                      final success = await authViewModel.authenticateWithBiometrics();
+                      if (success && mounted) {
+                        HapticFeedback.mediumImpact(); // Added sensory feedback
+                        Navigator.pushReplacementNamed(context, '/todo_list');
+                      } else if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Biometric authentication failed.')),
+                        );
+                      }
+                    },
+                    icon: const Icon(FontAwesomeIcons.fingerprint, color: AppTheme.primaryCyan),
+                    label: const Text('BIOMETRIC LOGIN', style: TextStyle(color: AppTheme.primaryCyan)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: const BorderSide(color: AppTheme.primaryCyan, width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                ).animate().fadeIn(delay: 650.ms).slideY(begin: 0.2, end: 0),
+                const SizedBox(height: 32),
+                Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/register'),
+                    child: RichText(
+                      text: TextSpan(
+                        text: "Don't have an account? ",
+                        style: TextStyle(color: Colors.white.withAlpha(128)),
+                        children: const [
+                          TextSpan(
+                            text: 'Register',
+                            style: TextStyle(
+                              color: AppTheme.primaryCyan,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ).animate().fadeIn(delay: 700.ms),
               ],
             ),
           ),
