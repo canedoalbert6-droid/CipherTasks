@@ -3,8 +3,8 @@ import 'package:mailer/smtp_server.dart';
 
 class EmailService {
   // These should ideally be in a secure config or .env
-  final String _username = 'canedoalbert6@gmail.com'; 
-  final String _password = 'kkmgfcjpylnghdqa'; 
+  final String _username = ''; 
+  final String _password = ''; 
 
   Future<bool> sendOtpEmail(String recipientEmail, String otp) async {
     final smtpServer = gmail(_username, _password);
