@@ -15,6 +15,9 @@ class AppLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : AppTheme.lightTextPrimary;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -24,7 +27,7 @@ class AppLogo extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // The Bird (using a stylized dove/crow icon)
+              // The Bird
               Positioned(
                 top: 0,
                 child: Icon(
@@ -34,13 +37,13 @@ class AppLogo extends StatelessWidget {
                 ).animate(onPlay: (controller) => controller.repeat(reverse: true))
                  .moveY(begin: -5, end: 5, duration: 2.seconds, curve: Curves.easeInOut),
               ),
-              // The Padlock "carried" by the bird
+              // The Padlock
               Positioned(
                 bottom: size * 0.1,
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: AppTheme.backgroundDark,
+                    color: isDark ? AppTheme.backgroundDark : Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
@@ -67,11 +70,16 @@ class AppLogo extends StatelessWidget {
           RichText(
             textAlign: TextAlign.center,
             text: TextSpan(
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+              style: TextStyle(
+                fontSize: 28, 
+                fontWeight: FontWeight.bold, 
+                letterSpacing: 1.5,
+                fontFamily: Theme.of(context).textTheme.displayLarge?.fontFamily,
+              ),
               children: [
-                const TextSpan(
+                TextSpan(
                   text: 'TheBid ',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: textColor),
                 ),
                 TextSpan(
                   text: 'CipherTask',

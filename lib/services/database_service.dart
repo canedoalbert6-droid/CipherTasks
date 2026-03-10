@@ -16,52 +16,79 @@ class DatabaseService {
 
   Future<Database> _initDB() async {
     String path = join(await getDatabasesPath(), 'ciphertask.db');
+    print('DEBUG: Initializing database at: $path');
     return await openDatabase(
       path,
       password: dbKey,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
+        print('DEBUG: Creating database table "todos"');
         await db.execute('''
           CREATE TABLE todos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
             secretNote TEXT,
-            isCompleted INTEGER
+            isCompleted INTEGER,
+            createdAt TEXT
           )
         ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        print('DEBUG: Upgrading database from $oldVersion to $newVersion');
+        if (oldVersion < 2) {
+          await db.execute('ALTER TABLE todos ADD COLUMN createdAt TEXT');
+        }
       },
     );
   }
 
-  Future<int> insertTodo(TodoModel todo) async {
+  Future<void> insertTodo(TodoModel todo) async {
     final db = await database;
-    return await db.insert('todos', todo.toMap());
+    final map = todo.toMap();
+    print('DEBUG: Inserting into SQLite: $map');
+    await db.insert('todos', map);
   }
 
   Future<List<TodoModel>> getTodos() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('todos');
+    print('DEBUG: Fetching all entries from SQLite...');
+    final List<Map<String, dynamic>> maps = await db.query('todos', orderBy: 'createdAt DESC');
+    
+    print('DEBUG: Raw SQLite results count: ${maps.length}');
+    for (var map in maps) {
+      print('DEBUG: Row data: $map');
+    }
+
     return List.generate(maps.length, (i) {
       return TodoModel.fromMap(maps[i]);
     });
   }
 
-  Future<int> updateTodo(TodoModel todo) async {
+  Future<void> updateTodo(TodoModel todo) async {
     final db = await database;
-    return await db.update(
+    final map = todo.toMap();
+    print('DEBUG: Updating SQLite ID ${todo.id}: $map');
+    await db.update(
       'todos',
-      todo.toMap(),
+      map,
       where: 'id = ?',
       whereArgs: [todo.id],
     );
   }
 
-  Future<int> deleteTodo(int id) async {
+  Future<void> deleteTodo(int id) async {
     final db = await database;
-    return await db.delete(
+    print('DEBUG: Deleting SQLite ID: $id');
+    await db.delete(
       'todos',
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  Future<void> deleteAllTodos() async {
+    final db = await database;
+    print('DEBUG: Wiping ALL entries from SQLite');
+    await db.delete('todos');
   }
 }
